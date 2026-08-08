@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TitanMesh Messenger</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>TitanMesh Messenger</h1>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-dot online" id="networkStatus"></span>
+                    <span id="peerCount">Loading...</span>
+                </div>
+                <div class="status-item">
+                    Blocks: <span id="blockCount">0</span>
+                </div>
+                <div class="status-item">
+                    Inbox: <span id="inboxCount">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="section-title">Your Keys</div>
+                
+                <div style="margin-bottom: 10px;">
+                    <button class="btn" onclick="generateKeys()" id="generateKeysBtn" style="width: 100%; margin-bottom: 5px;">
+                        Generate New Keys
+                    </button>
+                    <button class="btn" onclick="setSessionKeys()" id="setSessionBtn" style="width: 100%; margin-bottom: 5px;" disabled>
+                        Set Session Keys
+                    </button>
+                    <button class="btn" onclick="clearSession()" id="clearSessionBtn" style="width: 100%; margin-bottom: 5px; background: #64748b;">
+                        Clear Session
+                    </button>
+                </div>
+                
+                <div id="keyStatus" class="status-message" style="margin-bottom: 10px;"></div>
+                
+                <div class="key-display">
+                    <div class="key-label">Session Status:</div>
+                    <div id="sessionStatus" style="font-weight: bold;">Not Set</div>
+                </div>
+                
+                <div class="key-display">
+                    <div class="key-label">Public Key:</div>
+                    <div id="publicKey" class="loading">No keys generated</div>
+                </div>
+                <div class="key-display">
+                    <div class="key-label">Private Key:</div>
+                    <div id="privateKey" class="loading">No keys generated</div>
+                </div>
+                
+                <div style="margin-bottom: 10px; display: flex; gap: 5px;">
+                    <button class="btn small" onclick="exportKeys()" style="flex: 1;">Export Keys</button>
+                    <button class="btn small" onclick="document.getElementById('importKeyFile').click()" style="flex: 1;">Import Keys</button>
+                    <input type="file" id="importKeyFile" accept=".json" style="display: none;" onchange="importKeys(this.files[0])">
+                </div>
+                
+                <div class="section-title">Data Management</div>
+                <div style="margin-bottom: 10px; display: flex; gap: 5px; flex-wrap: wrap;">
+                    <button class="btn small" onclick="exportData()" style="flex: 1;">Export Data</button>
+                    <button class="btn small" onclick="document.getElementById('importDataFile').click()" style="flex: 1;">Import Data</button>
+                    <input type="file" id="importDataFile" accept=".json" style="display: none;" onchange="importData(this.files[0])">
+                </div>
+                
+                <div class="section-title">Remote Sync</div>
+                <div style="margin-bottom: 10px;">
+                    <input type="text" id="peerSyncUrl" placeholder="http://peer-ip:port" style="width: 100%; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px; margin-bottom: 5px;">
+                    <button class="btn small" onclick="remoteSync()" style="width: 100%;">Sync from Peer</button>
+                </div>
+                <div id="syncStatus" style="font-size: 11px; color: #64748b; margin-top: 5px;"></div>
+                
+                <div class="section-title">Node Stats</div>
+                <div class="stats-box">
+                    <div><span>Blocks:</span><span id="statBlocks">-</span></div>
+                    <div><span>Messages:</span><span id="statMessages">-</span></div>
+                    <div><span>Pending:</span><span id="statPending">-</span></div>
+                    <div><span>Sent:</span><span id="statSent">-</span></div>
+                    <div><span>Peers:</span><span id="statPeers">-</span></div>
+                </div>
+                
+                <div class="section-title">Known Peers</div>
+                <div class="peers-list" id="peersList">
+                    <div class="peer-item loading">Loading...</div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <button class="btn small" onclick="loadAllData()" style="width: 100%; margin-bottom: 5px;">
+                        Refresh All
+                    </button>
+                </div>
+            </div>
+            
+            <div class="messenger">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('send')">Send Message</button>
+                    <button class="tab" onclick="switchTab('inbox')">Inbox</button>
+                    <button class="tab" onclick="switchTab('sent')">Sent</button>
+                </div>
+                
+                <div class="tab-content" id="tab-send">
+                    <div class="send-section">
+                        <h3 style="margin-bottom: 15px;">Send Message</h3>
+                        <div style="background: #fef3c7; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; color: #92400e;">
+                            Warning: You must generate keys and set them in your session before sending messages.
+                        </div>
+                        <div class="form-group">
+                            <label>Recipient's Public Key</label>
+                            <input type="text" id="recipientKey" placeholder="Enter recipient's public key...">
+                        </div>
+                        <div class="form-group">
+                            <label>Message</label>
+                            <textarea id="messageText" placeholder="Type your message..."></textarea>
+                        </div>
+                        <button class="btn" onclick="sendMessage()" id="sendBtn" disabled>
+                            Send Message (5s PoW)
+                        </button>
+                        <div class="status-message" id="sendStatus"></div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="tab-inbox" style="display: none;">
+                    <div class="inbox-section">
+                        <h3 style="margin-bottom: 15px; display: flex; justify-content: space-between;">
+                            Inbox
+                            <button class="btn" onclick="refreshInbox()" style="font-size: 12px; padding: 6px 12px;">
+                                Refresh
+                            </button>
+                        </h3>
+                        <div id="inboxList">
+                            <div style="color: #94a3b8; text-align: center; padding: 40px;">
+                                Loading...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="tab-sent" style="display: none;">
+                    <div class="inbox-section">
+                        <h3 style="margin-bottom: 15px; display: flex; justify-content: space-between;">
+                            Sent Messages
+                            <button class="btn" onclick="refreshSentMessages()" style="font-size: 12px; padding: 6px 12px;">
+                                Refresh
+                            </button>
+                        </h3>
+                        <div id="sentList">
+                            <div style="color: #94a3b8; text-align: center; padding: 40px;">
+                                Loading...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/app.js"></script>
+</body>
+</html>
