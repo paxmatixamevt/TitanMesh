@@ -55,8 +55,7 @@ Cryptography Libraries (Pure Python):
 
 ## Installation
 
-Clone the repository:
-git clone https://github.com/yourusername/titanmesh.git
+Clone the repository
 cd titanmesh
 
 Install dependencies:
